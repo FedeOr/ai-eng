@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import pandas as pd
 
 from load.load_pipeline import load_sklearn_object
 from PIL import Image
@@ -37,23 +38,23 @@ def side_menu():
     trestbps = st.sidebar.slider("resting blood pressure", 50, 250, 130, 1)
     chol = st.sidebar.slider("serum cholestoral in mg/dl", 100, 600, 250, 1)
     talac = st.sidebar.slider("maximum heart rate achieved", 50, 250, 150, 1)
-    oldpeak = st.sidebar.number_input("ST depression induced by exercise relative to rest", 0, 10, 1, 0.1)
+    oldpeak = st.sidebar.number_input("ST depression induced by exercise relative to rest", 0.0, 10.0, 1.0, 0.1)
 
     row = [age, trestbps, chol, talac, oldpeak]
 
-    if(st.button('Submit')):
+    if (st.sidebar.button('Submit')):
         print('Button clicked!')
         feat_cols = ['age', 'trestbps', 'chol', 'talac', 'oldpeak']
 
         feature_trasformation = load_sklearn_object("StandardScaler.pkl", 'preprocess')
         model = load_sklearn_object("DecisionTreeClassifier-auto.pkl", 'models')
-
+        
         # Create the Dataframe
         features = pd.DataFrame([row], columns = feat_cols)
-
+        
         # Feature Engineering
         data = feature_trasformation.transform(features)
-
+        print("feat eng ok")
         # Prediction
         predictions = model.predict(data)
         
@@ -61,3 +62,4 @@ def side_menu():
             st.write("This is a healthy person!")
         else:
             st.write("This person has high chances of having diabetes!")
+    
