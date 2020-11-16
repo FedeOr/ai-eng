@@ -14,8 +14,8 @@ def launch():
         main_interface()
         side_menu()
         return True
-    except:
-        print('Error')
+    except Exception as e:
+        print(f'Error during streamlit launch: {e}')
         return False
     
 def main_interface():
@@ -57,7 +57,7 @@ def side_menu():
         print("feat eng ok")
         # Prediction
         predictions = model.predict(data)
-        
+        print("predict ok")
         if(predictions[0] == 0):
             st.write("This is a healthy person!")
         else:

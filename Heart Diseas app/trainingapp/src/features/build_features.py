@@ -11,8 +11,8 @@ def preprocessing(data):
     y = data['target']
     x = data.drop('target', axis = 1)
     
-    num_features = x.select_dtypes(include=['float64','int64'])
-    columns = num_features.columns
+    num_columns = ['age', 'trestbps', 'chol', 'thalach', 'oldpeak']
+    num_features = x[num_columns]
 
     #scale the values using a StandardScaler
     print('Applying Standard Scaler...')
@@ -22,7 +22,7 @@ def preprocessing(data):
     X = scaler.transform(num_features)
 
     #features DataFrame 
-    features = pd.DataFrame(X, columns = columns)
+    features = pd.DataFrame(X, columns = num_columns)
 
     print('Finish preprocessing with success!')
     
