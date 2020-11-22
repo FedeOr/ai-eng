@@ -1,0 +1,12 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "myblob",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "example/campus_prediction/{name}.json",
+      "connection": "AZURE_STORAGE_ACCOUNT"
+    }
+  ]
+}
