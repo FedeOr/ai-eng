@@ -1,1 +1,5 @@
-test
+Scaricare ZIP
+Unzippare e aprire progetto con VSCode
+Creare nuovo ambiente virtuale con virtualenv venv
+Installare librerie con pip install requirements.txt
+Avviare applicazione con streamlit run app.py
