@@ -1,0 +1,5 @@
+Id,Nome,Ip,TabStorico
+1,Edificio1,10.2.1.142,LogEdificioUno
+2,Edificio2,10.2.3.254,LogEdificioDue
+5,Edificio3,10.2.3.22,LogEdificioTre
+6,Villa,10.2.3.14,LogVilla
