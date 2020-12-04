@@ -1,0 +1,10 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+      "BLOB_CONTAINER_NAME": "example",
+      "AZURE_STORAGE_ACCOUNT": "DefaultEndpointsProtocol=https;AccountName=fostorageaccount;AccountKey=Y5cQHn/1JEGTN/2DnG0d9CT0/YHl374ajUtbHgBHCQyl9Dw5fjadr5EmWOTo8cljhvq9gvMEwSoVaDsmhyibgQ==;EndpointSuffix=core.windows.net",
+      "MODEL_URL": "https://adb-5873545433774891.11.azuredatabricks.net/model/FO_Isolation_Forest/Staging/invocations",
+      "DATABRICKS_TOKEN": "dapibfd16fdd6ed90aae1912f5f5cae0905e"
+    }
+  }
+  
