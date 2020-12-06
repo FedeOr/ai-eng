@@ -12,14 +12,15 @@ from PIL import Image
 from src.features import preprocessing
 from src.model import predict_model
 from src.prediction import save_prediction
+from load_settings import get_setting
 
 def read_DB_table(tableName):
     
     conn = pyodbc.connect('Driver={SQL Server};'
-                      'Server=tcp:aiengserver.database.windows.net,1433;'
-                      'Database=CampusData;'
-                      'Uid=AzureUser;'
-                      'Pwd=PasswordReti01;'
+                      'Server='+get_setting("SERVER")+';'
+                      'Database='+get_setting("DATABASE")+';'
+                      'Uid='+get_setting("DB_USER")+';'
+                      'Pwd='+get_setting("DB_PWD")+';'
                       'Connection Timeout=30')
 
     cursor = conn.cursor()
@@ -91,7 +92,7 @@ def main_menu():
         return False
           
 def side_menu():
-    table_name = st.sidebar.text_input("Inserire il nome della tabella su cui fare la nuova predizione")
+    table_name = st.sidebar.text_input("Inserire il nome della tabella su cui fare la predizione")
     
     if(st.sidebar.button('Esegui Predizione')):
         with st.sidebar:
