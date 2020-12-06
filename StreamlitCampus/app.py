@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -10,20 +9,22 @@ import pyodbc
 
 from azure.storage.blob import BlobServiceClient, BlobClient
 from PIL import Image
+from src.features import preprocessing
 from src.model import predict_model
+from src.prediction import save_prediction
 
-def connect_DB(tableName):
+def read_DB_table(tableName):
     
-    #cnxn = pyodbc.connect('Driver={ODBC Driver 13 for SQL Server};Server=tcp:aiengserver.database.windows.net,1433;Database=CampusData;Uid=ai_user;Pwd=P@ssw0rdR&ti01!;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30')
     conn = pyodbc.connect('Driver={SQL Server};'
                       'Server=tcp:aiengserver.database.windows.net,1433;'
                       'Database=CampusData;'
                       'Uid=AzureUser;'
-                      'Pwd=PasswordReti01')
+                      'Pwd=PasswordReti01;'
+                      'Connection Timeout=30')
 
     cursor = conn.cursor()
 
-    df_database = pd.read_sql_query('SELECT top 5 * FROM dbo.'+ tableName, conn)
+    df_database = pd.read_sql_query('SELECT * FROM [dbo].['+ tableName+']', conn)
     
     return df_database
     
@@ -73,9 +74,11 @@ def main_menu():
         with data_expander:
             st.write("Per visualizzare quali sensori sono collocati in ogni edificio utilizza i menu sottostanti:")
             
-            df_building = pd.read_csv("data/building.csv")
-            df_group = pd.read_csv("data/group.csv", encoding='cp1252')
-            
+            #df_building = pd.read_csv("data/building.csv")
+            #df_group = pd.read_csv("data/group.csv", encoding='cp1252')
+            df_building = pd.DataFrame(read_DB_table("Building"))
+            df_group = pd.DataFrame(read_DB_table("Group"))
+        
             names = df_building['Nome'].tolist()
             ids = df_building['Id'].tolist()
             dictionary = dict(zip(ids, names))
@@ -86,7 +89,7 @@ def main_menu():
             st.write("Sensori:")
             st.dataframe(df_group.loc[(df_group.IdBuilding == building_option) & (df_group.ValueType == group_option),['GroupAddress', 'Description']])
         
-        pipeline_expander = st.beta_expander("Pipeline di predizione")
+        pipeline_expander = st.beta_expander("Training del modello")
         with pipeline_expander:
             st.subheader("Pre processing")
             st.write("Per l'analisi degli outlier sono state prese in considerazione solo le rilevazioni mandate automaticamente dai sensori,"+
@@ -113,23 +116,23 @@ def main_menu():
             st.write("Gli iperparametri utilizzati per addestrare il modello sono stati: *n_estimators* e *max_samples*."+
                      " La combinazione di iperparametri migliore, utilizzata nel modello salvato è *n_estimators=* e *max_samples=*")
         
-        prediction_expander = st.beta_expander("Predizioni")
-        with prediction_expander:
-            st.write("Le predizioni effettuate sul dataset utilizzato per fare il training del modello, hanno evedenziato le seguenti"+
-                     " proporzioni tra *Inlier* e *Outlier*")
+        # prediction_expander = st.beta_expander("Predizioni")
+        # with prediction_expander:
+        #     st.write("Le predizioni effettuate sul dataset utilizzato per fare il training del modello, hanno evedenziato le seguenti"+
+        #              " proporzioni tra *Inlier* e *Outlier*")
             
-            outliers = 2.657845#df['Prediction'].loc[df.Prediction == -1].count()/df['Prediction'].count()
-            labels = 'Outliers', 'Inliers'
-            sizes = [30,70]#df.groupby('Prediction').count().Data
-            explode = (0.1, 0)
+        #     outliers = 2.657845#df['Prediction'].loc[df.Prediction == -1].count()/df['Prediction'].count()
+        #     labels = 'Outliers', 'Inliers'
+        #     sizes = [30,70]#df.groupby('Prediction').count().Data
+        #     explode = (0.1, 0)
 
-            fig, ax = plt.subplots(figsize=(10,5))
-            ax.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', startangle=90, textprops={'fontsize': 15})
-            ax.axis('equal')
+        #     fig, ax = plt.subplots(figsize=(10,5))
+        #     ax.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', startangle=90, textprops={'fontsize': 15})
+        #     ax.axis('equal')
             
-            st.pyplot(fig)
+        #     st.pyplot(fig)
             
-            st.write("Per effettuare la predizione degli *outlier* sui nuovi dati utilizzare il bottone nella barra laterale.")
+        #     st.write("Per effettuare la predizione degli *outlier* sui nuovi dati utilizzare il bottone nella barra laterale.")
     
     except Exception as e:
         print(f'Error: {e}')
@@ -145,19 +148,21 @@ def side_menu():
                     st.error("Errore: nome tabella non valido")
                 else:
                     
-                    df = connect_DB(table_name)
+                    df = read_DB_table(table_name)
                     #df = pd.read_csv("data\log2.csv", sep=';', encoding='cp1252')
-                    
-                    df_transform = predict_model.dataset_transform(df)
-                    
-                    df_preprocess = predict_model.preprocessing(df_transform)
-                                
-                    prediction = score_model(df_preprocess)
+                    st.write("Read")
+                    df_transform = preprocessing.dataset_transform(df)
+                    df_preprocess = preprocessing.preprocessing(df_transform)
+                    prediction = predict_model.score_model(df_preprocess)
+                    st.write("predict")
                     df['Prediction'] = prediction
                     
                     json_result = df.to_json(orient='split')
-                    save_json(json_result)
-                                
+                    utc_timestamp = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+                    json_filename = f"prediction_{utc_timestamp}.json"
+                    st.write("to_json")
+                    save_prediction.save_json(json_result, json_filename)
+                    st.write("saved")
                     outliers = df['Prediction'].loc[df.Prediction == -1].count()/df['Prediction'].count() * 100
                     st.write('La predizione effettuata sui nuovi dati, ha rilevato la presenza di outlier nella misura del %1.1f%%.' % outliers)
                     labels = 'Outliers', 'Inliers'
@@ -171,31 +176,33 @@ def side_menu():
                     ax.axis('equal')
                     
                     st.pyplot(fig)
+                    
+                    st.markdown(f'Per maggiori dettagli, è stato salvato nello storage il file *{json_filename}*')
             
-            except:
-                st.error(f'Errore durante la predizione.')
+            except Exception as e:
+                st.error(f'Errore durante la predizione.{e}')
         
-def score_model(data: pd.DataFrame):
+# def score_model(data: pd.DataFrame):
     
-    model_url = "https://adb-4483624067336826.6.azuredatabricks.net/model/Team2-IsoForest/Production/invocations"#os.environ.get("MODEL_URL")
-    headers = {'Authorization': f'Bearer {"dapi183eecc004e8a34a083cc8389d6836b4"}'} #{'Authorization': f'Bearer {os.environ.get("DATABRICKS_TOKEN")}'}
-    data_json = data.to_dict(orient='split')
-    response = requests.request(method='POST', headers=headers, url=model_url, json=data_json)
+#     model_url = "https://adb-4483624067336826.6.azuredatabricks.net/model/Team2-IsoForest/Production/invocations"#os.environ.get("MODEL_URL")
+#     headers = {'Authorization': f'Bearer {"dapi183eecc004e8a34a083cc8389d6836b4"}'} #{'Authorization': f'Bearer {os.environ.get("DATABRICKS_TOKEN")}'}
+#     data_json = data.to_dict(orient='split')
+#     response = requests.request(method='POST', headers=headers, url=model_url, json=data_json)
 
-    if response.status_code != 200:
-      raise Exception(f'Request failed with status {response.status_code}, {response.text}')
-    return response.json()
+#     if response.status_code != 200:
+#       raise Exception(f'Request failed with status {response.status_code}, {response.text}')
+#     return response.json()
 
-def save_json(json_data: str):
-    conn_string ="DefaultEndpointsProtocol=https;AccountName=storageaccountaieng92cc;AccountKey=yRee7zuNsdVCv2AFf/MhrGd8eGfOPncQvDfmXYN3F9/wQ9QCj+9RE0k1r+kXtehudbWDNgZ+3cQqGKFVivgWKg==;EndpointSuffix=core.windows.net"#"AZURE_STORAGE_ACCOUNT"
-    container = "team2"#("BLOB_CONTAINER_NAME"
+# def save_json(json_data: str):
+#     conn_string ="DefaultEndpointsProtocol=https;AccountName=storageaccountaieng92cc;AccountKey=yRee7zuNsdVCv2AFf/MhrGd8eGfOPncQvDfmXYN3F9/wQ9QCj+9RE0k1r+kXtehudbWDNgZ+3cQqGKFVivgWKg==;EndpointSuffix=core.windows.net"#"AZURE_STORAGE_ACCOUNT"
+#     container = "team2"#("BLOB_CONTAINER_NAME"
     
-    utc_timestamp = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
-    json_filename = f"prediction_{utc_timestamp}.json"
+#     utc_timestamp = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+#     json_filename = f"prediction_{utc_timestamp}.json"
     
-    blob_service_client = BlobServiceClient.from_connection_string(conn_string)
-    blob_client = blob_service_client.get_blob_client(container=container, blob=json_filename)
-    blob_client.upload_blob(json_data)
+#     blob_service_client = BlobServiceClient.from_connection_string(conn_string)
+#     blob_client = blob_service_client.get_blob_client(container=container, blob=json_filename)
+#     blob_client.upload_blob(json_data)
 
 if __name__ == "__main__":
     main_menu()
