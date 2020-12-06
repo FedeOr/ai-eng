@@ -1,33 +1,13 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import requests
-import os
 import datetime
-import pyodbc
 
-from azure.storage.blob import BlobServiceClient, BlobClient
 from PIL import Image
-from src.features import preprocessing
+from src.features import read_data, preprocessing
 from src.model import predict_model
 from src.prediction import save_prediction
 from load_settings import get_setting
-
-def read_DB_table(tableName):
-    
-    conn = pyodbc.connect('Driver={SQL Server};'
-                      'Server='+get_setting("SERVER")+';'
-                      'Database='+get_setting("DATABASE")+';'
-                      'Uid='+get_setting("DB_USER")+';'
-                      'Pwd='+get_setting("DB_PWD")+';'
-                      'Connection Timeout=30')
-
-    cursor = conn.cursor()
-
-    df_database = pd.read_sql_query('SELECT * FROM [dbo].['+ tableName+']', conn)
-    
-    return df_database
 
 def main_menu():
     try:
@@ -45,10 +25,8 @@ def main_menu():
         with data_expander:
             st.write("Per visualizzare quali sensori sono collocati in ogni edificio utilizza i menu sottostanti:")
             
-            #df_building = pd.read_csv("data/building.csv")
-            #df_group = pd.read_csv("data/group.csv", encoding='cp1252')
-            df_building = pd.DataFrame(read_DB_table("Building"))
-            df_group = pd.DataFrame(read_DB_table("Group"))
+            df_building = pd.DataFrame(read_data.read_DB_table("Building"))
+            df_group = pd.DataFrame(read_data.read_DB_table("Group"))
         
             names = df_building['Nome'].tolist()
             ids = df_building['Id'].tolist()
@@ -101,8 +79,7 @@ def side_menu():
                     st.error("Errore: nome tabella non valido")
                 else:
                     
-                    df = read_DB_table(table_name)
-                    #df = pd.read_csv("data\log2.csv", sep=';', encoding='cp1252')
+                    df = read_data.read_DB_table(table_name)
                     
                     df_transform = preprocessing.dataset_transform(df)
                     df_preprocess = preprocessing.preprocessing(df_transform)

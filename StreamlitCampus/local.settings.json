@@ -1,6 +1,6 @@
 {
-  "BLOB_CONTAINER_NAME": "example",
-  "AZURE_STORAGE_ACCOUNT": "DefaultEndpointsProtocol=https;AccountName=fostorageaccount;AccountKey=Y5cQHn/1JEGTN/2DnG0d9CT0/YHl374ajUtbHgBHCQyl9Dw5fjadr5EmWOTo8cljhvq9gvMEwSoVaDsmhyibgQ==;EndpointSuffix=core.windows.net",
+  "BLOB_CONTAINER_NAME": "team2",
+  "AZURE_STORAGE_ACCOUNT": "DefaultEndpointsProtocol=https;AccountName=storageaccountaieng92cc;AccountKey=yRee7zuNsdVCv2AFf/MhrGd8eGfOPncQvDfmXYN3F9/wQ9QCj+9RE0k1r+kXtehudbWDNgZ+3cQqGKFVivgWKg==;EndpointSuffix=core.windows.net",
   "MODEL_URL": "https://adb-4483624067336826.6.azuredatabricks.net/model/Team2-IsoForest/Production/invocations",
   "DATABRICKS_TOKEN": "dapi183eecc004e8a34a083cc8389d6836b4",
   "SERVER": "tcp:aiengserver.database.windows.net,1433",
