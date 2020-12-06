@@ -4,5 +4,5 @@ scikit-learn
 azure-storage-blob
 requests
 streamlit
-numpy
+numpy==1.19.3
 pyodbc

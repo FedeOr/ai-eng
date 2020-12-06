@@ -27,36 +27,6 @@ def read_DB_table(tableName):
     df_database = pd.read_sql_query('SELECT * FROM [dbo].['+ tableName+']', conn)
     
     return df_database
-    
-# def dataset_transform(df_log):
-#     # Valore di TelegramType da mantenere
-#     ttype = 'write      '
-#     # Creazione dizionario
-#     d = {'W':1, '%':2, 'ppm':3, 'C°':4, 'Wh':5, 'bool':6}
-#     # Rimozione righe con TelegramType = 'response'
-#     df_log = df_log.loc[df_log.TelegramType==ttype]
-#     # Trasformo i dati boolean in modo da poter essere interpretati dal modello
-#     df_log.loc[df_log.Value=='False',["Value"]] = 0
-#     df_log.loc[df_log.Value=='True',["Value"]] = 1
-#     # Creazione della colonna a partire dal mapping del dizionario
-#     df_log['IdType'] = df_log['ValueType'].map(d)
-#     # Conversione colonna 'Data'
-#     df_log['Data'] = pd.to_datetime(df_log['Data'])
-#     # Conversione colonna 'Value'
-#     df_log["Value"] = pd.to_numeric(np.char.replace(df_log["Value"].to_numpy().astype(str),',','.'))
-    
-#     return df_log
-
-# def preprocessing(df_log):
-    
-#     # Estraggo l'ora dalla data della rilevazione
-#     df_log['Hour'] = pd.DatetimeIndex(df_log['Data']).hour
-#     # Rimozione colonne non necessarie per il training del modello
-#     column_to_drop = ['Data','IndividualAddress','GroupAddress','TelegramType','ValueType','Description']
-#     df_log.drop(column_to_drop, axis=1, inplace=True)
-#     # df_log.drop(column_to_drop)
-    
-#     return df_log
 
 def main_menu():
     try:
@@ -115,25 +85,7 @@ def main_menu():
             
             st.write("Gli iperparametri utilizzati per addestrare il modello sono stati: *n_estimators* e *max_samples*."+
                      " La combinazione di iperparametri migliore, utilizzata nel modello salvato è *n_estimators=* e *max_samples=*")
-        
-        # prediction_expander = st.beta_expander("Predizioni")
-        # with prediction_expander:
-        #     st.write("Le predizioni effettuate sul dataset utilizzato per fare il training del modello, hanno evedenziato le seguenti"+
-        #              " proporzioni tra *Inlier* e *Outlier*")
-            
-        #     outliers = 2.657845#df['Prediction'].loc[df.Prediction == -1].count()/df['Prediction'].count()
-        #     labels = 'Outliers', 'Inliers'
-        #     sizes = [30,70]#df.groupby('Prediction').count().Data
-        #     explode = (0.1, 0)
 
-        #     fig, ax = plt.subplots(figsize=(10,5))
-        #     ax.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', startangle=90, textprops={'fontsize': 15})
-        #     ax.axis('equal')
-            
-        #     st.pyplot(fig)
-            
-        #     st.write("Per effettuare la predizione degli *outlier* sui nuovi dati utilizzare il bottone nella barra laterale.")
-    
     except Exception as e:
         print(f'Error: {e}')
         return False
@@ -150,19 +102,17 @@ def side_menu():
                     
                     df = read_DB_table(table_name)
                     #df = pd.read_csv("data\log2.csv", sep=';', encoding='cp1252')
-                    st.write("Read")
+                    
                     df_transform = preprocessing.dataset_transform(df)
                     df_preprocess = preprocessing.preprocessing(df_transform)
                     prediction = predict_model.score_model(df_preprocess)
-                    st.write("predict")
                     df['Prediction'] = prediction
                     
                     json_result = df.to_json(orient='split')
                     utc_timestamp = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
                     json_filename = f"prediction_{utc_timestamp}.json"
-                    st.write("to_json")
                     save_prediction.save_json(json_result, json_filename)
-                    st.write("saved")
+                    
                     outliers = df['Prediction'].loc[df.Prediction == -1].count()/df['Prediction'].count() * 100
                     st.write('La predizione effettuata sui nuovi dati, ha rilevato la presenza di outlier nella misura del %1.1f%%.' % outliers)
                     labels = 'Outliers', 'Inliers'
@@ -181,30 +131,7 @@ def side_menu():
             
             except Exception as e:
                 st.error(f'Errore durante la predizione.{e}')
-        
-# def score_model(data: pd.DataFrame):
-    
-#     model_url = "https://adb-4483624067336826.6.azuredatabricks.net/model/Team2-IsoForest/Production/invocations"#os.environ.get("MODEL_URL")
-#     headers = {'Authorization': f'Bearer {"dapi183eecc004e8a34a083cc8389d6836b4"}'} #{'Authorization': f'Bearer {os.environ.get("DATABRICKS_TOKEN")}'}
-#     data_json = data.to_dict(orient='split')
-#     response = requests.request(method='POST', headers=headers, url=model_url, json=data_json)
-
-#     if response.status_code != 200:
-#       raise Exception(f'Request failed with status {response.status_code}, {response.text}')
-#     return response.json()
-
-# def save_json(json_data: str):
-#     conn_string ="DefaultEndpointsProtocol=https;AccountName=storageaccountaieng92cc;AccountKey=yRee7zuNsdVCv2AFf/MhrGd8eGfOPncQvDfmXYN3F9/wQ9QCj+9RE0k1r+kXtehudbWDNgZ+3cQqGKFVivgWKg==;EndpointSuffix=core.windows.net"#"AZURE_STORAGE_ACCOUNT"
-#     container = "team2"#("BLOB_CONTAINER_NAME"
-    
-#     utc_timestamp = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
-#     json_filename = f"prediction_{utc_timestamp}.json"
-    
-#     blob_service_client = BlobServiceClient.from_connection_string(conn_string)
-#     blob_client = blob_service_client.get_blob_client(container=container, blob=json_filename)
-#     blob_client.upload_blob(json_data)
 
 if __name__ == "__main__":
     main_menu()
     side_menu()
-    
