@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+import azure.functions as func
+import requests
+import numpy as np
 
 from PIL import Image
 from src.features import read_data, preprocessing
@@ -63,7 +66,7 @@ def main_menu():
             st.write("ID BUILDING  \n" + "HOUR  \n" + "ID_TYPE  \n" + "VALUE  \n")
             
             st.write("Gli iperparametri utilizzati per addestrare il modello sono stati: *n_estimators* e *max_samples*."+
-                     " La combinazione di iperparametri migliore, utilizzata nel modello salvato è *n_estimators=* e *max_samples=*")
+                     " La combinazione di iperparametri migliore, utilizzata nel modello salvato è *n_estimators=300* e *max_samples=1500*")
 
     except Exception as e:
         print(f'Error: {e}')
@@ -80,19 +83,30 @@ def side_menu():
                 else:
                     
                     df = read_data.read_DB_table(table_name)
+                    ###Senza trigger###
+                    # df_transform = preprocessing.dataset_transform(df)
+                    # df_preprocess = preprocessing.preprocessing(df_transform)
+                    # prediction = predict_model.score_model(df_preprocess)
+                    # df['Prediction'] = prediction
                     
-                    df_transform = preprocessing.dataset_transform(df)
-                    df_preprocess = preprocessing.preprocessing(df_transform)
-                    prediction = predict_model.score_model(df_preprocess)
-                    df['Prediction'] = prediction
+                    # json_result = df.to_json(orient='split')
+                    # utc_timestamp = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+                    # json_filename = f"prediction_{utc_timestamp}.json"
+                    # save_prediction.save_json(json_result, json_filename)
                     
-                    json_result = df.to_json(orient='split')
+                    ###Con trigger###
                     utc_timestamp = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
                     json_filename = f"prediction_{utc_timestamp}.json"
-                    save_prediction.save_json(json_result, json_filename)
+                    
+                    response = requests.get(get_setting("TRIGGER_URL"), params={'table_name': table_name, 'json_filename': json_filename})
+                    
+                    data = response.json().get("data")
+                    columns = response.json().get("columns")
+                    df = pd.DataFrame.from_dict(data)
+                    df.columns = columns
                     
                     outliers = df['Prediction'].loc[df.Prediction == -1].count()/df['Prediction'].count() * 100
-                    st.write('La predizione effettuata sui nuovi dati, ha rilevato la presenza di outlier nella misura del %1.1f%%.' % outliers)
+                    st.write('La predizione effettuata sui dati, ha rilevato la presenza di outlier nella misura del %1.1f%%.' % outliers)
                     labels = 'Outliers', 'Inliers'
                     sizes = df.groupby('Prediction').count().Value
                     if sizes.count() == 1:
@@ -108,7 +122,7 @@ def side_menu():
                     st.markdown(f'Per maggiori dettagli, è stato salvato nello storage il file *{json_filename}*')
             
             except Exception as e:
-                st.error(f'Errore durante la predizione.{e}')
+                st.error(f'Errore durante la predizione.  \n{e}')
 
 if __name__ == "__main__":
     main_menu()

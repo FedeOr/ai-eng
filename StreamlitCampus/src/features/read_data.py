@@ -5,7 +5,7 @@ from load_settings import get_setting
 
 def read_DB_table(tableName):
     
-    conn = pyodbc.connect('Driver={SQL Server};'
+    conn = pyodbc.connect('Driver={ODBC Driver 17 for SQL Server};'
                       'Server='+get_setting("SERVER")+';'
                       'Database='+get_setting("DATABASE")+';'
                       'Uid='+get_setting("DB_USER")+';'

@@ -5,6 +5,7 @@
   "DATABRICKS_TOKEN": "dapi183eecc004e8a34a083cc8389d6836b4",
   "SERVER": "tcp:aiengserver.database.windows.net,1433",
   "DATABASE": "CampusData",
-  "DB_USER": "AzureUser",
-  "DB_PWD": "PasswordReti01"
+  "DB_USER": "ai_user",
+  "DB_PWD": "P@ssw0rdR&ti01!",
+  "TRIGGER_URL": "https://fappteam2.azurewebsites.net/api/HttpTriggerCampus?code=ou6E3XVgs3jBRw4TtNcwBLag1DPoORwQDoguqMELns76idJ58Pxxcg=="
 }
